@@ -4,14 +4,16 @@ import (
 	"log"
 	"os"
 
+	"net/http"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"net/http"
 )
 
 type Blog struct {
+	ID       uint   `json:"id" gorm:"primaryKey"`
 	Author   string `json:"author"`
 	Title    string `json:"title"`
 	Content  string `json:"content"`
@@ -23,39 +25,46 @@ type Repository struct {
 	DB *gorm.DB
 }
 
-func (r *Repository) CreateBlog(context *fibre.Ctx) error {  
-blog := Blog{}
+func (r *Repository) CreateBlog(context *fiber.Ctx) error {
+	blog := Blog{}
+	if err := context.BodyParser(&blog); err != nil {
+		context.Status(http.StatusBadRequest).JSON(&fiber.Map{"message": "Invalid request body"})
+		return err
+	}
 
-  context.BodyParser(&blog)
+	if err := r.DB.Create(&blog).Error; err != nil {
+		context.Status(http.StatusInternalServerError).JSON(&fiber.Map{"message": "Could not create a blog"})
+		return err
+	}
 
-if err := nil {
-	context.Status (http.StatusBadRequest).JSON(
-		&fibre.Map{"message": "Request Failed"}
-	)
+	context.Status(http.StatusOK).JSON(&fiber.Map{
+		"message": "Blog created successfully",
+		"data":    blog, // Return the created blog data.
+	})
+	return nil
+}
 
+func (r *Repository) GetBlogs(context *fiber.Ctx) error {
+	blogModels := &[]Blog{}
+	if err := r.DB.Find(blogModels).Error; err != nil {
+		context.Status(http.StatusInternalServerError).JSON(&fiber.Map{"message": "Could not find blogs"})
+		return err
+	}
 
+	context.Status(http.StatusOK).JSON(&fiber.Map{
+		"message": "Blogs retrieved successfully",
+		"data":    blogModels, // Return the retrieved blog data.
+	})
+	return nil
 }
 
 func (r *Repository) SetupRoutes(app *fiber.App) {
-	// User routes
-	app.Get("/api/users", r.GetUsers)
-	app.Post("/api/users", r.CreateUser)
-	app.Get("/api/users/:id", r.GetUser)
-	app.Put("/api/users/:id", r.UpdateUser)
-	app.Delete("/api/users/:id", r.DeleteUser)
-
 	// Blog routes
-	app.Get("/api/posts", r.GetPosts)
-	app.Post("/api/posts", r.CreatePost)
-	app.Get("/api/posts/:id", r.GetPost)
-	app.Put("/api/posts/:id", r.UpdatePost)
-	app.Delete("/api/posts/:id", r.DeletePost)
+	app.Get("/api/blogs", r.GetBlogs)
+	app.Post("/api/blogs", r.CreateBlog)
+	// Add routes for updating and deleting blogs as needed.
 
-	// Comment routes
-	app.Get("/api/posts/:id/comments", r.GetComments)
-	app.Post("/api/posts/:id/comments", r.CreateComment)
-	app.Put("/api/posts/:id/comments/:commentId", r.UpdateComment)
-	app.Delete("/api/posts/:id/comments/:commentId", r.DeleteComment)
+	// Add routes for user and comment operations if required.
 }
 
 func main() {
