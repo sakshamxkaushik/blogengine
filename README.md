@@ -31,15 +31,7 @@ Provide a concise overview of your project. What does it do? Why did you create 
 List any prerequisites that users need to install or set up before using your application. Include links to download or installation guides if necessary.
 
 - Go (Golang)
-- Node.js (for the frontend, if applicable)
+- Next.js (for the frontend, if applicable) (React)
 - PostgreSQL (if using a database)
 
-### Installation
-
-Step-by-step instructions on how to install and configure your application.
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/your-username/your-repo.git
-   cd your-repo
+### Currently in progress 
